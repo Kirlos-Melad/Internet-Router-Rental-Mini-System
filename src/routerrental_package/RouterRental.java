@@ -1,5 +1,6 @@
 package routerrental_package;
 
+import java.io.Serializable;
 /**
  * Used packages
  */
@@ -105,7 +106,12 @@ class InvoicePrinter implements Printer {
  *      "https://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#see">
  *      How to use see tag </a>
  */
-class InputError extends Exception {
+final class InputError extends Exception {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public InputError(String message) {
 		super(message);
 	}
@@ -114,8 +120,8 @@ class InputError extends Exception {
 /**
  * Creates a new router. Single responsibility applied.
  */
-class Router {
-	// Attributes
+class Router implements Serializable {
+	private static final long serialVersionUID = 2L;
 	/**
 	 * Final data member serial number of the router.
 	 */
@@ -129,7 +135,6 @@ class Router {
 	 */
 	private char model;
 
-	// Constructors
 	/**
 	 * Overloaded Constructor.
 	 * 
@@ -153,7 +158,6 @@ class Router {
 		setPortsNumber(portsNumber);
 	}
 
-	// Setters And Getters
 	/**
 	 * @return serialNumber Serial number of the router.
 	 */
@@ -185,7 +189,7 @@ class Router {
 			this.portsNumber = portsNumber;
 		} catch (InputError e) {
 			System.out.print(e.getMessage());
-			setPortsNumber(RouterRental.read.nextInt());
+			setPortsNumber(SystemManager.read.nextInt());
 		}
 	}
 
@@ -217,7 +221,7 @@ class Router {
 			this.model = Character.toUpperCase(model);
 		} catch (InputError e) {
 			System.out.print(e.getMessage());
-			setModel(RouterRental.read.next().charAt(0));
+			setModel(SystemManager.read.next().charAt(0));
 		}
 	}
 }
@@ -225,8 +229,9 @@ class Router {
 /**
  * Creates a reservation.
  */
-class Reservation {
-	// Attributes
+class Reservation implements Serializable {
+	private static final long serialVersionUID = 3L;
+
 	/**
 	 * Static member counts the instances of the class
 	 */
@@ -259,7 +264,6 @@ class Reservation {
 	 */
 	private final char type;
 
-	// Constructors
 	/**
 	 * Overloaded constructor
 	 * 
@@ -291,7 +295,6 @@ class Reservation {
 		setDuration(duration);
 	}
 
-	// Setters And Getters
 	/**
 	 * @return startDate The start date of the reservation
 	 */
@@ -316,11 +319,11 @@ class Reservation {
 			setDueDate();
 		} catch (InputError e) {
 			System.out.print(e.getMessage());
-			setStartDate(RouterRental.read.nextLine());
+			setStartDate(SystemManager.read.nextLine());
 		} catch (ParseException e) {
 			System.out.print("Couldn't identify the entered format.\n"
 					+ "Please, enter the date again using the next format [day-month-year at hour:minutes PM/AM]:");
-			setStartDate(RouterRental.read.nextLine());
+			setStartDate(SystemManager.read.nextLine());
 		}
 	}
 
@@ -347,7 +350,7 @@ class Reservation {
 			setDueDate();
 		} catch (InputError e) {
 			System.out.print(e.getMessage());
-			setDuration(RouterRental.read.nextInt());
+			setDuration(SystemManager.read.nextInt());
 		}
 	}
 
@@ -405,7 +408,9 @@ class Reservation {
 /**
  * Creates an invoice. Single responsibility applied.
  */
-class Invoice {
+class Invoice implements Serializable {
+	private static final long serialVersionUID = 4L;
+
 	/**
 	 * Serial number of the router
 	 */
@@ -493,22 +498,36 @@ class Pair<U, V> {
  * @see <a href="https://www.tutorialspoint.com/java/java_hashmap_class.htm">
  *      Java - The HashMap Class </a>
  */
-class SystemManager {
+abstract class SystemManager {
+	public static final Scanner read = new Scanner(System.in);
 	/**
 	 * Saves all Routers [Key: Serial number, Value: Router]
 	 */
-	private static HashMap<Integer, Router> router = new HashMap<Integer, Router>();
+	protected static HashMap<Integer, Router> router;
 	/**
 	 * Saves all Reservations [Key: Reservation number, Value: Reservation]
 	 */
-	private static HashMap<Integer, Reservation> reservation = new HashMap<Integer, Reservation>();
+	protected static HashMap<Integer, Reservation> reservation;
 	/**
 	 * Keeps track of the router's reservations [Key: Router serial number, Value:
 	 * Array-list of Reservation's Number]
 	 */
-	private static HashMap<Integer, ArrayList<Integer>> routerSchedule = new HashMap<Integer, ArrayList<Integer>>();
+	protected static HashMap<Integer, ArrayList<Integer>> routerSchedule;
+	protected static ArrayList<String> feedback;
 
-	private SystemManager() {
+	protected SystemManager() {
+	}
+
+	public static void startSystem() {
+		router = new HashMap<Integer, Router>();
+		reservation = new HashMap<Integer, Reservation>();
+		routerSchedule = new HashMap<Integer, ArrayList<Integer>>();
+		feedback = new ArrayList<String>();
+	}
+
+	public static void closeSystem() {
+		read.close();
+		System.exit(1);
 	}
 
 	/**
@@ -520,7 +539,7 @@ class SystemManager {
 	 * @param operation          [Operation '+': to add, Operation '-': to delete]
 	 * @return boolean Returns true if the system is updated successfully
 	 */
-	private static boolean systemUpdate(Integer routerSerialNumber, Reservation r, char operation) {
+	protected static final boolean systemUpdate(Integer routerSerialNumber, Reservation r, char operation) {
 		if (operation == '+') {
 			reservation.put(r.getNumber(), r);
 			routerSchedule.get(routerSerialNumber).add(r.getNumber());
@@ -530,36 +549,6 @@ class SystemManager {
 			reservation.remove(r.getNumber());
 			Integer removeNumber = r.getNumber();
 			return routerSchedule.get(routerSerialNumber).remove(removeNumber);
-		}
-		return false;
-	}
-
-	/**
-	 * Overloaded function to update all tracked records. Edit the router's records.
-	 * 
-	 * @param r         Router object
-	 * @param operation [Operation '+': to add, Operation '-': to delete]
-	 * @return boolean Returns true if the system is updated successfully
-	 */
-	private boolean systemUpdate(Router r, char operation) {
-		if (operation == '+') {
-			if (routerExist(r.getSerialNumber()))
-				return false;
-
-			router.put(r.getSerialNumber(), r);
-			routerSchedule.put(r.getSerialNumber(), new ArrayList<Integer>());
-			return true;
-		} else if (operation == '-') {
-			if (router.isEmpty() || !routerExist(r.getSerialNumber()))
-				return false;
-
-			router.remove(r.getSerialNumber());
-			ArrayList<Integer> arrayList = routerSchedule.get(r.getSerialNumber());
-			for (Integer reservationNumber : arrayList) {
-				reservation.remove(reservationNumber);
-			}
-			routerSchedule.remove(r.getSerialNumber());
-			return true;
 		}
 		return false;
 	}
@@ -581,6 +570,57 @@ class SystemManager {
 	}
 
 	/**
+	 * Check if there's a router that has the given serial number.
+	 * 
+	 * @param routerSerialNumber Serial number of the router
+	 * @return boolean Returns true if the router exits
+	 */
+	protected static boolean routerExists(Integer routerSerialNumber) {
+		return router.containsKey(routerSerialNumber);
+	}
+}
+
+class adminstratorSystemManager extends SystemManager {
+	private adminstratorSystemManager() {
+	}
+
+	/**
+	 * Overloaded function to update all tracked records. Edit the router's records.
+	 * 
+	 * @param r         Router object
+	 * @param operation [Operation '+': to add, Operation '-': to delete]
+	 * @return boolean Returns true if the system is updated successfully
+	 */
+	private boolean systemUpdate(Router r, char operation) {
+		if (operation == '+') {
+			if (routerExists(r.getSerialNumber()))
+				return false;
+
+			router.put(r.getSerialNumber(), r);
+			routerSchedule.put(r.getSerialNumber(), new ArrayList<Integer>());
+			return true;
+		} else if (operation == '-') {
+			if (router.isEmpty() || !routerExists(r.getSerialNumber()))
+				return false;
+
+			router.remove(r.getSerialNumber());
+			ArrayList<Integer> arrayList = routerSchedule.get(r.getSerialNumber());
+			for (Integer reservationNumber : arrayList) {
+				reservation.remove(reservationNumber);
+			}
+			routerSchedule.remove(r.getSerialNumber());
+			return true;
+		}
+		return false;
+	}
+
+}
+
+class customerSystemManager extends SystemManager {
+	private customerSystemManager() {
+	}
+
+	/**
 	 * Checks if the router available by the given date.
 	 * 
 	 * @param routerSerialNumber Serial number of the router
@@ -588,7 +628,7 @@ class SystemManager {
 	 * @param endDate            due date
 	 * @return boolean Returns true if available
 	 */
-	private static boolean isDateAvailable(int routerSerialNumber, Date startDate, Date endDate) {
+	private static boolean isDateAvailable(Integer routerSerialNumber, Date startDate, Date endDate) {
 		ArrayList<Integer> reservationList = routerSchedule.get(routerSerialNumber);
 
 		for (int i = 0; i < reservationList.size(); i++) {
@@ -598,16 +638,6 @@ class SystemManager {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Check if there's a router that has the given serial number.
-	 * 
-	 * @param routerSerialNumber Serial number of the router
-	 * @return boolean Returns true if the router exits
-	 */
-	private static boolean routerExist(Integer routerSerialNumber) {
-		return router.containsKey(routerSerialNumber);
 	}
 
 	/**
@@ -628,7 +658,7 @@ class SystemManager {
 	 * @return Invoice Used by the customer to reserve the router
 	 */
 	public static Invoice makeReservation(int routerSerialNumber) {
-		if (!routerExist(routerSerialNumber)) {
+		if (!routerExists(routerSerialNumber)) {
 			System.out.print("Serial Number not found.\n");
 			return null;
 		}
@@ -636,11 +666,11 @@ class SystemManager {
 		System.out.print("Please, enter your reservation information:\n");
 
 		System.out.print("Start date using this format [day-month-year at hour:minutes PM/AM]: ");
-		String startDate = RouterRental.read.nextLine();
+		String startDate = SystemManager.read.nextLine();
 		System.out.print("Type of reservation: ");
-		char type = RouterRental.read.next().charAt(0);
+		char type = SystemManager.read.next().charAt(0);
 		System.out.print("Duration: ");
-		int duration = RouterRental.read.nextInt();
+		int duration = SystemManager.read.nextInt();
 
 		Reservation r = new Reservation(type, startDate, duration);
 		if (!isDateAvailable(routerSerialNumber, r.getStartDate(), r.getDueDate())) {
@@ -650,6 +680,29 @@ class SystemManager {
 
 		systemUpdate(routerSerialNumber, r, '+');
 		return createInvoice(routerSerialNumber, r);
+	}
+
+	public static Invoice extendReservation(Invoice invoice, int extendedDuration) {
+		Date oldDueDate = reservation.get(invoice.getReservationNumber()).getDueDate();
+		Date virtuallyStartDate = new Date(oldDueDate.getTime() + (long) 1);
+		char type = reservation.get(invoice.getReservationNumber()).getType();
+		int days;
+		if (type == 'd')
+			days = extendedDuration;
+		else if (type == 'w')
+			days = extendedDuration * 7;
+		else
+			days = extendedDuration * 30;
+		Date newDueDate = new Date(virtuallyStartDate.getTime() + ((1000 * 60 * 60 * 24) * days) - (long) 1);
+		if (!isDateAvailable(invoice.getRouterSerialNumber(), virtuallyStartDate, newDueDate)) {
+			System.out.print("Router isn't available\n");
+			return null;
+		}
+
+		reservation.get(invoice.getReservationNumber())
+				.setDuration(reservation.get(invoice.getReservationNumber()).getDuration() + extendedDuration);
+		return new Invoice(router.get(invoice.getRouterSerialNumber()),
+				reservation.get(invoice.getReservationNumber()));
 	}
 
 	/**
@@ -666,18 +719,51 @@ class SystemManager {
 
 		return systemUpdate(invoice.getRouterSerialNumber(), reservation.get(invoice.getReservationNumber()), '-');
 	}
+
+	public static Invoice changeRouter(int routerSerialNumber, Invoice invoice) {
+		if (!routerExists(routerSerialNumber)) {
+			System.out.print("Serial Number not found.\n");
+			return null;
+		}
+
+		if (!isDateAvailable(routerSerialNumber, reservation.get(invoice.getReservationNumber()).getStartDate(),
+				reservation.get(invoice.getReservationNumber()).getDueDate())) {
+			System.out.print("Router isn't available.\n");
+			return null;
+		}
+		routerSchedule.get((Integer) invoice.getRouterSerialNumber()).remove((Integer) invoice.getReservationNumber());
+		routerSchedule.get((Integer) invoice.getRouterSerialNumber()).add(invoice.getReservationNumber());
+
+		return createInvoice(routerSerialNumber, reservation.get(invoice.getReservationNumber()));
+	}
+
+	public static void getFeedback(String feedback) {
+		SystemManager.feedback.add(feedback);
+	}
 }
 
 abstract class Customer {
-	private ArrayList<Invoice> invoice;
+	protected ArrayList<Invoice> invoice;
+	protected InvoicePrinter printer;
 
 	public Customer() {
 		this.invoice = new ArrayList<Invoice>();
+		printer = new InvoicePrinter();
 	}
 
-	public boolean rentRouter(Integer routerSerialNumber) {
-		Invoice i = SystemManager.makeReservation(routerSerialNumber);
-		if (invoice == null) {
+	public void printInvoices() {
+		if (invoice.isEmpty())
+			System.out.print("No invoices were found\n");
+
+		for (int i = 0; i < invoice.size(); i++) {
+			System.out.printf("%d] ", i + 1);
+			printer.printAllDataMemberInformation(invoice.get(i));
+		}
+	}
+
+	public boolean rentRouter(int routerSerialNumber) {
+		Invoice i = customerSystemManager.makeReservation(routerSerialNumber);
+		if (i == null) {
 			System.out.print("Failed to make reservation.\n");
 			return false;
 		}
@@ -685,48 +771,79 @@ abstract class Customer {
 		invoice.add(i);
 		return true;
 	}
-	
-	public boolean extendRentDuration() {
-		
-	}
 
-	public boolean cancelRent() {
-		System.out.print("Please, choose the reservation number you want cancel:\n");
-		InvoicePrinter ip = new InvoicePrinter();
-		for (int i = 0; i < invoice.size(); i++) {
-			System.out.printf("%d] ", i);
-			ip.printAllDataMemberInformation(invoice.get(i));
-		}
-		int index = RouterRental.read.nextInt();
-		if(invoice.size() < index) {
+	public boolean extendRentDuration() {
+		System.out.print("Please, choose the reservation number you want to extend: ");
+		int index = SystemManager.read.nextInt();
+
+		if (invoice.size() < index) {
 			System.out.print("Failed to cancel reservation.\n");
 			return false;
 		}
-		boolean b = SystemManager.cancelReservation(invoice.get(index));
-		if(!b)
+
+		System.out.print("Please, enter the extended duration: ");
+		int duration = SystemManager.read.nextInt();
+
+		Invoice i = customerSystemManager.extendReservation(invoice.get(index), duration);
+
+		if (invoice == null) {
+			System.out.print("Failed to make reservation.\n");
+			return false;
+		}
+
+		invoice.set(index, i);
+		return true;
+	}
+
+	public boolean cancelRent() {
+		System.out.print("Please, choose the reservation number you want cancel: ");
+		int index = SystemManager.read.nextInt();
+
+		if (invoice.size() < index) {
 			System.out.print("Failed to cancel reservation.\n");
+			return false;
+		}
+		boolean b = customerSystemManager.cancelReservation(invoice.get(index));
+		if (!b)
+			System.out.print("Failed to cancel reservation.\n");
+
+		invoice.remove(index);
 		return b;
 	}
-	
-	
+
+	public boolean changeModel(int routerSerialNumber) {
+		System.out.print("Please, choose the reservation number you want to modify: ");
+		int index = SystemManager.read.nextInt();
+
+		if (invoice.size() < index) {
+			System.out.print("Failed to change reservation.\n");
+			return false;
+		}
+
+		Invoice i = customerSystemManager.changeRouter(routerSerialNumber, invoice.get(index));
+		if (i == null) {
+			System.out.print("Failed to change reservation.\n");
+			return false;
+		}
+
+		invoice.set(index, i);
+		return true;
+	}
+
+	public void sendFeedback() {
+		System.out.print("Enter your feedback: ");
+		customerSystemManager.getFeedback(SystemManager.read.nextLine());
+	}
 }
 
 public class RouterRental {
-	public static Scanner read;
 
 	public static void main(String[] args) throws ParseException {
-		read = new Scanner(System.in);
-		HashMap<String, Printer> printer = new HashMap<String, Printer>();
-		printer.put("router", new RouterPrinter());
-		printer.put("reservation", new ReservationPrinter());
-		Router r = new Router(123, 'A', 5);
-		printer.get("router").printAllDataMemberInformation(r);
+		SystemManager.startSystem();
 
-		String d = "20-5-2022 at 9:30 AM";
-		Reservation re = new Reservation('d', d, 30);
-		printer.get("reservation").printAllDataMemberInformation(re);
 		
-		read.close();
+
+		SystemManager.closeSystem();
 	}
 
 }
