@@ -23,12 +23,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import javax.swing.text.DefaultEditorKit.CutAction;
-
 /**
- * An interface prints all the information of an instance. Applies Single
- * Responsibility, Interface Segregation & Liskov Substitution from the SOLID
- * Principles
+ * An interface prints all the information of an instance. Applies Single.
+ * Responsibility, Interface Segregation and Liskov Substitution from the SOLID
+ * Principles.
  */
 interface Printer {
 	/**
@@ -95,6 +93,9 @@ class ReservationPrinter implements Printer {
 	}
 }
 
+/**
+ * Implements printer.
+ */
 class InvoicePrinter implements Printer {
 	/**
 	 * Prints all Invoice's information. Passing wrong object that is not an
@@ -248,7 +249,7 @@ class Router implements Serializable {
 }
 
 /**
- * Creates a reservation. Applies Single-Responsibility principle.
+ * Creates a reservation.
  */
 class Reservation implements Serializable {
 	/**
@@ -260,6 +261,9 @@ class Reservation implements Serializable {
 	 * Static member counts the instances of the class
 	 */
 	private static int counter = 0;
+	/**
+	 * Static member makes sure that the counter variable will be loaded only once
+	 */
 	private static boolean isCalled = false;
 	/**
 	 * Final member reservation's number
@@ -292,7 +296,7 @@ class Reservation implements Serializable {
 	/**
 	 * Overloaded constructor
 	 * 
-	 * @param Type type of reservation
+	 * @param type Type of reservation
 	 */
 	public Reservation(char type) {
 		type = Character.toLowerCase(type);
@@ -363,7 +367,8 @@ class Reservation implements Serializable {
 	 * Throws a user-defined exception if an invalid duration is passed, which will
 	 * cause it to call itself recursively until a valid input is provided.
 	 * 
-	 * @param duration the duration of the reservation
+	 * @param duration the duration of the reservation. Must be more than the
+	 *                 current one.
 	 */
 	public void setDuration(int duration) {
 		try {
@@ -429,20 +434,30 @@ class Reservation implements Serializable {
 		return reservationDate;
 	}
 
+	/**
+	 * Loads the counter value from a file
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
 	public static void setCounter() throws FileNotFoundException, ClassNotFoundException, IOException {
-		if(isCalled)
+		if (isCalled)
 			return;
-		
+
 		FileManager fileManager = new FileManager();
 		if (!fileManager.isFileEmpty("reservationCounter.ser")) {
 			counter = (int) fileManager.readFromFile("reservationCounter.ser");
-		}else {
+		} else {
 			counter = 0;
 		}
-		
+
 		isCalled = true;
 	}
 
+	/**
+	 * @return counter the counter value
+	 */
 	public static int getCounter() {
 		return counter;
 	}
@@ -471,6 +486,8 @@ class Invoice implements Serializable {
 	private float fees;
 
 	/**
+	 * Overloaded constructor
+	 * 
 	 * @param router      Takes router instance
 	 * @param reservation Takes reservation instance
 	 */
@@ -478,6 +495,13 @@ class Invoice implements Serializable {
 		this(router, reservation, 0);
 	}
 
+	/**
+	 * Overloaded constructor
+	 * 
+	 * @param router      Takes router instance
+	 * @param reservation Takes reservation instance
+	 * @param discount    Takes discount [0-1]
+	 */
 	public Invoice(Router router, Reservation reservation, float discount) {
 		this.routerSerialNumber = router.getSerialNumber();
 		this.reservationNumber = reservation.getNumber();
@@ -490,6 +514,7 @@ class Invoice implements Serializable {
 	 * @param routerModel         Router's model
 	 * @param reservationType     Type of reservation
 	 * @param reservationDuration Duration of reservation
+	 * @param discount            The discount percentage [0-1]
 	 */
 	private void setFees(char routerModel, char reservationType, int reservationDuration, float discount) {
 		if (discount < 0 || discount > 1) {
@@ -530,28 +555,82 @@ class Invoice implements Serializable {
 	}
 }
 
+/**
+ * Handles all read/write operation from and to file
+ * 
+ * @see <a href="https://www.javatpoint.com/serialization-in-java">
+ *      Serialization and Deserialization in Java </a>
+ * @see <a href="https://www.tutorialspoint.com/java/java_files_io.htm"> Java -
+ *      Files and I/O </a>
+ * @see <a href=
+ *      "https://stackoverflow.com/questions/285793/what-is-a-serialversionuid-and-why-should-i-use-it">
+ *      What is a serialVersionUID and why should I use it? </a>
+ * @see <a href=
+ *      "https://stackoverflow.com/questions/1816673/how-do-i-check-if-a-file-exists-in-java">
+ *      How do I check if a file exists in Java? </a>
+ * @see <a href=
+ *      "https://www.java67.com/2018/03/a-simple-example-to-check-if-file-is-empty-in-java.html">
+ *      A Simple Example to Check if File is Empty in Java </a>
+ */
 class FileManager {
+	/**
+	 * Stream to write to files
+	 */
 	private ObjectOutputStream outputStream;
+	/**
+	 * Stream to read from file
+	 */
 	private ObjectInputStream inputStream;
 
+	/**
+	 * Checks if the file is empty
+	 * 
+	 * @param fileName The name of the file
+	 * @return boolean Returns true if the file empty
+	 */
 	public final boolean isFileEmpty(String fileName) {
 		File file = new File("./database/" + fileName);
 
 		return (file.length() == 0);
 	}
 
+	/**
+	 * Read the data from file
+	 * 
+	 * @param fileName The name of the file
+	 * 
+	 * @return obj holds the data holds the data of the given file
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public final Object readFromFile(String fileName)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		inputStream = new ObjectInputStream(new FileInputStream("./database/" + fileName));
 		return inputStream.readObject();
 	}
 
+	/**
+	 * Write the data of a given object to a given file
+	 * 
+	 * @param fileName The name of the file
+	 * @param obj      An object that holds data
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public final void writeToFile(String fileName, Object obj) throws FileNotFoundException, IOException {
 		outputStream = new ObjectOutputStream(new FileOutputStream("./database/" + fileName));
 		outputStream.writeObject(obj);
 		outputStream.flush();
 	}
 
+	/**
+	 * Checks if the files exist if not creates them
+	 * 
+	 * @throws IOException
+	 */
 	public void checkSystemDataBase() throws IOException {
 		if (!Files.exists(Paths.get("./database"))) {
 			Files.createDirectories(Paths.get("./database/"));
@@ -578,8 +657,9 @@ class FileManager {
 }
 
 /**
- * Class that has all the system information. All inheriting classes applies
- * Single-Responsibility, Open-Closed & Liskov Substitution principle.
+ * Class that has all the information needed by the system. All inheriting
+ * classes applies Single-Responsibility, Open-Closed and Liskov Substitution
+ * principle.
  * 
  * @see <a href="https://www.tutorialspoint.com/java/java_hashmap_class.htm">
  *      Java - The HashMap Class </a>
@@ -607,13 +687,23 @@ abstract class SystemIformationHolder {
 /**
  * System printer Class that prints any information needed by the system users
  * [Admin/Customer]. All the functions apply Least Privilege principle.
- *
  */
 class SystemInformationPrinter extends SystemIformationHolder {
 	private HashMap<String, Printer> printer;
+	/**
+	 * Makes sure that there's only one instance
+	 */
 	private static boolean isUsed = false;
+	/**
+	 * The only instance of the class
+	 */
 	private static SystemInformationPrinter systemInformationPrinter;
 
+	/**
+	 * Gets the only instance of the class
+	 * 
+	 * @return systemInformationPrinter The only instance of the class
+	 */
 	public static SystemInformationPrinter getInstance() {
 		if (!isUsed) {
 			systemInformationPrinter = new SystemInformationPrinter();
@@ -648,9 +738,13 @@ class SystemInformationPrinter extends SystemIformationHolder {
 	/**
 	 * Prints the schedule of given router [start/end date]
 	 * 
-	 * @param routerSerialNumber Seria number of the router
+	 * @param routerSerialNumber Serial number of the router
 	 */
 	public void printRouterSchedule(final Integer routerSerialNumber) {
+		if (!routerSchedule.containsKey(routerSerialNumber)) {
+			System.out.print("Router doesn't exist\n");
+			return;
+		}
 		SimpleDateFormat formater = new SimpleDateFormat("dd-MM-yyyy 'at' hh:mm a");
 		for (Integer reservationNumber : routerSchedule.get(routerSerialNumber)) {
 			System.out.printf("Start date: %s\n", formater.format(reservation.get(reservationNumber).getStartDate()));
@@ -661,9 +755,13 @@ class SystemInformationPrinter extends SystemIformationHolder {
 	/**
 	 * Prints the reservation information
 	 * 
-	 * @param invoice An invoice of the customer
+	 * @param reservationNumber Reservation number
 	 */
 	public void printReservation(final Integer reservationNumber) {
+		if (!reservation.containsKey(reservationNumber)) {
+			System.out.print("Reservation doesn't exist\n");
+			return;
+		}
 		printer.get("Reservation").printAllDataMemberInformation(reservation.get(reservationNumber));
 	}
 
@@ -681,40 +779,56 @@ class SystemInformationPrinter extends SystemIformationHolder {
 		for (int i = 0; i < invoice.size(); i++) {
 			System.out.printf("%d] ", i + 1);
 			printer.get("Invoice").printAllDataMemberInformation(invoice.get(i));
+			System.out.println();
 		}
 	}
-	
+
+	/**
+	 * Prints all information about specific router
+	 * 
+	 * @param routerSerialNumber Serial number of the router
+	 */
+	public void printRouter(final Integer routerSerialNumber) {
+		if (!router.containsKey(routerSerialNumber)) {
+			System.out.print("Router doesn't exist\n");
+			return;
+		}
+		printer.get("Router").printAllDataMemberInformation(router.get(routerSerialNumber));
+	}
+
+	/**
+	 * Prints all feedbacks
+	 */
 	public void printAllFeedbacks() {
+		if (feedback.isEmpty()) {
+			System.out.print("No feedbacks were found\n");
+		}
 		for (int i = 0; i < feedback.size(); i++) {
 			System.out.printf("%d] %s\n", i + 1, feedback.get(i));
+			System.out.println();
 		}
 	}
 }
 
 /**
  * Class that manages the system start and close
- * 
- * @see <a href="https://www.javatpoint.com/serialization-in-java">
- *      Serialization and Deserialization in Java </a>
- * @see <a href="https://www.tutorialspoint.com/java/java_files_io.htm"> Java -
- *      Files and I/O </a>
- * @see <a href=
- *      "https://stackoverflow.com/questions/285793/what-is-a-serialversionuid-and-why-should-i-use-it">
- *      What is a serialVersionUID and why should I use it? </a>
- * @see <a href=
- *      "https://stackoverflow.com/questions/1816673/how-do-i-check-if-a-file-exists-in-java">
- *      How do I check if a file exists in Java? </a>
- * @see <a href=
- *      "https://www.java67.com/2018/03/a-simple-example-to-check-if-file-is-empty-in-java.html">
- *      A Simple Example to Check if File is Empty in Java </a>
  */
 abstract class SystemManager extends SystemIformationHolder {
 	/**
 	 * Used to restrict the calling of start function
 	 */
 	private static boolean isCalled = false;
+	/**
+	 * The only instance of the class
+	 */
 	private static FileManager fileManager = new FileManager();
 
+	/**
+	 * Loads the data from the files to the Information holder class members
+	 * 
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public static void startSystem() throws IOException, ClassNotFoundException {
 		if (!isCalled)
 			isCalled = true;
@@ -725,31 +839,36 @@ abstract class SystemManager extends SystemIformationHolder {
 
 		if (!fileManager.isFileEmpty("router.ser")) {
 			router = (HashMap<Integer, Router>) fileManager.readFromFile("router.ser");
-		}else {
+		} else {
 			router = new HashMap<Integer, Router>();
 		}
 
 		if (!fileManager.isFileEmpty("reservation.ser")) {
 			reservation = (HashMap<Integer, Reservation>) fileManager.readFromFile("reservation.ser");
-		}else {
+		} else {
 			reservation = new HashMap<Integer, Reservation>();
 		}
 
 		if (!fileManager.isFileEmpty("routerSchedule.ser")) {
 			routerSchedule = (HashMap<Integer, ArrayList<Integer>>) fileManager.readFromFile("routerSchedule.ser");
-		}else {
+		} else {
 			routerSchedule = new HashMap<Integer, ArrayList<Integer>>();
 		}
 
 		if (!fileManager.isFileEmpty("feedback.ser")) {
 			feedback = (ArrayList<String>) fileManager.readFromFile("feedback.ser");
-		}else {
+		} else {
 			feedback = new ArrayList<String>();
 		}
-		
+
 		Reservation.setCounter();
 	}
 
+	/**
+	 * Loads the data to the files from the Information holder class members
+	 * 
+	 * @throws IOException
+	 */
 	public static void closeSystem() throws IOException {
 		fileManager.writeToFile("router.ser", router);
 		fileManager.writeToFile("reservation.ser", reservation);
@@ -760,6 +879,9 @@ abstract class SystemManager extends SystemIformationHolder {
 
 }
 
+/**
+ * Handle all needed functions by all users
+ */
 abstract class UserSystemManager extends SystemIformationHolder {
 
 	/**
@@ -777,6 +899,10 @@ abstract class UserSystemManager extends SystemIformationHolder {
 			sortSchedule(routerSchedule.get(routerSerialNumber));
 			return true;
 		} else if (operation == '-') {
+			if (!reservation.containsKey(r.getNumber())) {
+				System.out.print("Reservation doesn't exist\n");
+				return false;
+			}
 			reservation.remove(r.getNumber());
 			Integer removeNumber = r.getNumber();
 			return routerSchedule.get(routerSerialNumber).remove(removeNumber);
@@ -786,6 +912,8 @@ abstract class UserSystemManager extends SystemIformationHolder {
 
 	/**
 	 * Sort router's reservation by start date.
+	 * 
+	 * @param reservationList Takes a list of reservations of a router
 	 * 
 	 * @see <a href=
 	 *      "https://stackoverflow.com/questions/18441846/how-to-sort-an-arraylist-in-java">
@@ -816,12 +944,27 @@ abstract class UserSystemManager extends SystemIformationHolder {
  * Class that holds functionalities needed by customers
  */
 class CustomerSystemManager extends UserSystemManager {
+	/**
+	 * The only instance of the class
+	 */
 	private static CustomerSystemManager customerSystemManager;
+	/**
+	 * Makes sure that there's only one instance used
+	 */
 	private static boolean isUsed = false;
 
+	/**
+	 * Prevents making objects from the class
+	 */
 	private CustomerSystemManager() {
 	}
 
+	/**
+	 * Creates instance of the class and returns it. If it's called again it will
+	 * return null
+	 * 
+	 * @return customerSystemManager The only instance of the class
+	 */
 	public static CustomerSystemManager getInstance() {
 		if (!isUsed) {
 			customerSystemManager = new CustomerSystemManager();
@@ -856,6 +999,8 @@ class CustomerSystemManager extends UserSystemManager {
 	 * 
 	 * @param routerSerialNumber Serial number of the router
 	 * @param r                  Reservation object
+	 * @param isResident         Boolean to know weather the customer is resident or
+	 *                           not
 	 * @return Invoice Used by the customer to reserve the router
 	 */
 	private Invoice createInvoice(Integer routerSerialNumber, Reservation r, boolean isResident) {
@@ -869,9 +1014,11 @@ class CustomerSystemManager extends UserSystemManager {
 	 * Makes a reservation for the customer.
 	 * 
 	 * @param routerSerialNumber Serial number of the router
+	 * @param isResident         Boolean to know weather the customer is resident or
+	 *                           not
+	 * 
 	 * @return Invoice Used by the customer to reserve the router
 	 */
-
 	public Invoice makeReservation(int routerSerialNumber, boolean isResident) {
 		if (!routerExists(routerSerialNumber)) {
 			System.out.print("Serial Number not found.\n");
@@ -898,25 +1045,38 @@ class CustomerSystemManager extends UserSystemManager {
 		return createInvoice(routerSerialNumber, r, isResident);
 	}
 
-	public Invoice extendReservation(Invoice invoice, int extendedDuration, boolean isResident) {
-		Date oldDueDate = reservation.get(invoice.getReservationNumber()).getDueDate();
-		Date virtuallyStartDate = new Date(oldDueDate.getTime() + (long) 1);
+	/**
+	 * Extends the reservation depending on the type given first time the
+	 * reservation made [d - w - m]
+	 * 
+	 * @param invoice     The invoice of the reservation
+	 * @param newDuration The new duration of the reservation [the type won't
+	 *                    change]
+	 * @param isResident  Boolean to know whether the customer is resident
+	 * @return Invoice New invoice with the new fees
+	 */
+	public Invoice extendReservation(Invoice invoice, int newDuration, boolean isResident) {
+		if (!reservation.containsKey(invoice.getReservationNumber())) {
+			System.out.print("Reservation doesn't exist\n");
+			return null;
+		}
 		char type = reservation.get(invoice.getReservationNumber()).getType();
 		int days;
 		if (type == 'd')
-			days = extendedDuration;
+			days = newDuration;
 		else if (type == 'w')
-			days = extendedDuration * 7;
+			days = newDuration * 7;
 		else
-			days = extendedDuration * 30;
-		Date newDueDate = new Date(virtuallyStartDate.getTime() + ((1000 * 60 * 60 * 24) * days) - (long) 1);
-		if (!isDateAvailable(invoice.getRouterSerialNumber(), virtuallyStartDate, newDueDate)) {
+			days = newDuration * 30;
+		Date newDueDate = new Date(reservation.get(invoice.getReservationNumber()).getStartDate().getTime()
+				+ ((1000 * 60 * 60 * 24) * days));
+		if (!isDateAvailable(invoice.getRouterSerialNumber(),
+				reservation.get(invoice.getReservationNumber()).getStartDate(), newDueDate)) {
 			System.out.print("Router isn't available\n");
 			return null;
 		}
 
-		reservation.get(invoice.getReservationNumber())
-				.setDuration(reservation.get(invoice.getReservationNumber()).getDuration() + extendedDuration);
+		reservation.get(invoice.getReservationNumber()).setDuration(newDuration);
 		return createInvoice(invoice.getRouterSerialNumber(), reservation.get(invoice.getReservationNumber()),
 				isResident);
 	}
@@ -936,6 +1096,14 @@ class CustomerSystemManager extends UserSystemManager {
 		return systemUpdate(invoice.getRouterSerialNumber(), reservation.get(invoice.getReservationNumber()), '-');
 	}
 
+	/**
+	 * Change the router model
+	 * 
+	 * @param routerSerialNumber The new router serial number
+	 * @param invoice            The invoice of the reservation
+	 * @param isResident         Boolean to know whether the customer is resident
+	 * @return
+	 */
 	public Invoice changeRouter(int routerSerialNumber, Invoice invoice, boolean isResident) {
 		if (!routerExists(routerSerialNumber)) {
 			System.out.print("Serial Number not found.\n");
@@ -953,39 +1121,80 @@ class CustomerSystemManager extends UserSystemManager {
 		return createInvoice(routerSerialNumber, reservation.get(invoice.getReservationNumber()), isResident);
 	}
 
+	/**
+	 * Receives the feedback from the customer
+	 * 
+	 * @param feedback The feedback sent from the customer
+	 */
 	public void getFeedback(String feedback) {
 		SystemManager.feedback.add(feedback);
 	}
 }
 
+/**
+ * Creates Customer
+ */
 class Customer implements Serializable {
 	/**
-	 * 
+	 * serialVersionUID is used in serializable classes
 	 */
 	private static final long serialVersionUID = 5L;
+	/**
+	 * Array of invoices
+	 */
 	private ArrayList<Invoice> invoice;
+	/**
+	 * Boolean to know whether the customer is resident
+	 */
 	private final boolean isResident;
+	/**
+	 * ID of the customer
+	 */
 	private final int id;
+	/**
+	 * Instance of the CustomerSystemManager to interact with the system
+	 */
 	private static CustomerSystemManager customerSystemManager = CustomerSystemManager.getInstance();
 
+	/**
+	 * Constructor
+	 * 
+	 * @param id         ID of the customer
+	 * @param isResident Boolean to know whether the customer is resident
+	 */
 	public Customer(int id, boolean isResident) {
 		this.isResident = isResident;
 		this.invoice = new ArrayList<Invoice>();
 		this.id = id;// random id number from 1 to 10
 	}
 
+	/**
+	 * @return isResident Boolean to know whether the customer is resident
+	 */
 	public boolean isResident() {
 		return isResident;
 	}
 
+	/**
+	 * @return id Customer's ID
+	 */
 	public int getID() {
 		return id;
 	}
 
+	/**
+	 * @return invoice Array-list of all the invoices
+	 */
 	public ArrayList<Invoice> getInvoices() {
 		return invoice;
 	}
 
+	/**
+	 * Rent a router
+	 * 
+	 * @param routerSerialNumber serial number of the wanted router
+	 * @return bool Return true if it was rented successfully
+	 */
 	public boolean rentRouter(int routerSerialNumber) {
 		Invoice i = customerSystemManager.makeReservation(routerSerialNumber, isResident);
 		if (i == null) {
@@ -996,6 +1205,11 @@ class Customer implements Serializable {
 		return true;
 	}
 
+	/**
+	 * Choose the invoice number
+	 * 
+	 * @return index The number of the invoice. Return -1 if not found
+	 */
 	private int chooseInvoice() {
 		System.out.print("Please, choose the invoice number: ");
 		int index = RouterRental.read.nextInt();
@@ -1005,13 +1219,19 @@ class Customer implements Serializable {
 		return index;
 	}
 
+	/**
+	 * Extends the reservation depending on the type given first time the
+	 * reservation made [d - w - m]
+	 * 
+	 * @return boolean Returns true if the reservation changed successfully
+	 */
 	public boolean extendRentDuration() {
 		int index = chooseInvoice();
 		if (index == -1) {
 			return false;
 		}
 
-		System.out.print("Please, enter the extended duration: ");
+		System.out.print("Please, enter the new duration: ");
 		int duration = RouterRental.read.nextInt();
 		RouterRental.read.nextLine(); // throw away the \n not consumed by nextInt()
 
@@ -1025,6 +1245,11 @@ class Customer implements Serializable {
 		return true;
 	}
 
+	/**
+	 * Cancel a reservation
+	 * 
+	 * @return boolean Returns true if the reservation canceled successfully
+	 */
 	public boolean cancelRent() {
 		int index = chooseInvoice();
 
@@ -1039,6 +1264,12 @@ class Customer implements Serializable {
 		return b;
 	}
 
+	/**
+	 * Change router model
+	 * 
+	 * @param routerSerialNumber serial number of the new router
+	 * @return boolean Return true if the router changed successfully
+	 */
 	public boolean changeModel(int routerSerialNumber) {
 		int index = chooseInvoice();
 
@@ -1055,18 +1286,40 @@ class Customer implements Serializable {
 		return true;
 	}
 
+	/**
+	 * Send feedback to the system
+	 */
 	public void sendFeedback() {
 		System.out.print("Enter your feedback: ");
 		customerSystemManager.getFeedback(RouterRental.read.nextLine());
 	}
 
+	/**
+	 * used to know the reservation information
+	 * 
+	 * @return reservationNumber The number of the reservation
+	 */
 	public Integer showReservation() {
 		int index = chooseInvoice();
-		if(index == -1) {
+		if (index == -1) {
 			return null;
 		}
-		
-		return invoice.get(index).getReservationNumber();
+
+		return invoice.get(index - 1).getReservationNumber();
+	}
+
+	/**
+	 * used to know the router information
+	 * 
+	 * @return routerSerialNumber The serial number of the router
+	 */
+	public Integer showRouter() {
+		int index = chooseInvoice();
+		if (index == -1) {
+			return null;
+		}
+
+		return invoice.get(index - 1).getRouterSerialNumber();
 	}
 }
 
@@ -1074,12 +1327,27 @@ class Customer implements Serializable {
  * Class that holds functionalities needed by the admins
  */
 class AdminstratorSystemManager extends UserSystemManager {
+	/**
+	 * The only instance of the class
+	 */
 	private static AdminstratorSystemManager adminstratorSystemManager;
+	/**
+	 * Makes sure that there's only one instance used
+	 */
 	private static boolean isUsed = false;
 
+	/**
+	 * Prevents making instances of the class
+	 */
 	private AdminstratorSystemManager() {
 	}
 
+	/**
+	 * Creates instance of the class and returns it. If it's called again it will
+	 * return null
+	 * 
+	 * @return adminstratorSystemManager The only instance of the class
+	 */
 	public static AdminstratorSystemManager getInstance() {
 		if (!isUsed) {
 			adminstratorSystemManager = new AdminstratorSystemManager();
@@ -1123,28 +1391,62 @@ class AdminstratorSystemManager extends UserSystemManager {
 		return false;
 	}
 
+	/**
+	 * Add new router to the system
+	 * 
+	 * @param r Router object
+	 * @return boolean Returns true if the router added successfully
+	 */
 	public boolean addRouter(Router r) {
 		return systemUpdate(r, '+');
 	}
 
+	/**
+	 * Removes a router from the system
+	 * 
+	 * @param routerSerialNumber The serial number of the router
+	 * @return boolean Returns true if the router added successfully
+	 */
 	public boolean removeRouter(Integer routerSerialNumber) {
 		return systemUpdate(router.get(routerSerialNumber), '-');
 	}
 }
 
+/**
+ * Creates Administrator
+ */
 class Administrator {
+	/**
+	 * Instance of the AdminstratorSystemManager to interact with the system
+	 */
 	private static AdminstratorSystemManager adminstratorSystemManager;
+	/**
+	 * Admin's ID
+	 */
 	private final int id;
 
+	/**
+	 * Makes admin'n instance
+	 * 
+	 * @param id The ID of the admin
+	 */
 	public Administrator(int id) {
 		adminstratorSystemManager = AdminstratorSystemManager.getInstance();
 		this.id = id;
 	}
 
+	/**
+	 * @return id The id of the admin
+	 */
 	public int getID() {
 		return id;
 	}
 
+	/**
+	 * Add new router to the system
+	 *
+	 * @return boolean Returns true if the router was added successfully
+	 */
 	public boolean addRouter() {
 		System.out.print("Please, enter the router information\n");
 		System.out.print("Router's serial number: ");
@@ -1159,6 +1461,11 @@ class Administrator {
 
 	}
 
+	/**
+	 * Removes a router from the system
+	 *
+	 * @return boolean Returns true if the router added successfully
+	 */
 	public boolean removeRouter() {
 		System.out.print("Please, enter router's serial number: ");
 		Integer serialNumber = RouterRental.read.nextInt();
@@ -1174,17 +1481,46 @@ class Administrator {
  *      "https://stackoverflow.com/questions/23450524/java-scanner-doesnt-wait-for-user-input">
  *      Java Scanner doesn't wait for user input [duplicate] </a>
  */
-
 public class RouterRental {
+	/**
+	 * Scanner used by all classes
+	 */
 	public static final Scanner read = new Scanner(System.in);
+	/**
+	 * Printer to print needed information
+	 */
 	private static SystemInformationPrinter systemInformationPrinter = SystemInformationPrinter.getInstance();
+	/**
+	 * The only admin in the system
+	 */
 	private static Administrator administrator = new Administrator(2222);
+	/**
+	 * Saves all customers
+	 */
 	private static HashMap<Integer, Customer> customer;
+	/**
+	 * File manager to manage customer related files
+	 */
 	private static FileManager fileManager = new FileManager();
+	/**
+	 * Makes sure that the loadUsersFromFiles is called once
+	 */
 	private static boolean isCalled = false;
+	/**
+	 * Used to know what kind of users logged-in
+	 */
 	private static boolean isAdmin = false;
-	private static boolean isLogedin = false;
+	/**
+	 * Checks if any users logged-in
+	 */
+	private static boolean isLoggedin = false;
 
+	/**
+	 * Loads the customers from file
+	 * 
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	private static void loadUsersFromFiles() throws IOException, ClassNotFoundException {
 		if (!isCalled)
 			isCalled = true;
@@ -1195,19 +1531,32 @@ public class RouterRental {
 
 		if (!fileManager.isFileEmpty("customer.ser")) {
 			customer = (HashMap<Integer, Customer>) fileManager.readFromFile("customer.ser");
-		}else {
+		} else {
 			customer = new HashMap<Integer, Customer>();
 		}
 	}
 
+	/**
+	 * Loads the customers to file
+	 * 
+	 * @throws IOException
+	 */
 	private static void loadUsersToFiles() throws IOException {
 		fileManager.writeToFile("customer.ser", customer);
 	}
 
+	/**
+	 * Log-in simulating function
+	 * 
+	 * @return id The id of the user (customer / admin)
+	 */
 	private static Integer logIn() {
 		System.out.print("1] Admin\n" + "2] Customer\n" + "Enter your choice: ");
 		int choice = read.nextInt();
 		read.nextLine();
+		if (choice != 1 || choice != 2) {
+			return null;
+		}
 		System.out.print("Enter your ID: ");
 		Integer id = read.nextInt();
 		read.nextLine();
@@ -1215,7 +1564,7 @@ public class RouterRental {
 			if (id == administrator.getID()) {
 				System.out.print("Welcome Admin :D\n");
 				isAdmin = true;
-				isLogedin = true;
+				isLoggedin = true;
 				return id;
 			} else {
 				System.out.print("Wrong ID\n");
@@ -1225,7 +1574,7 @@ public class RouterRental {
 			if (customer.containsKey((Integer) id)) {
 				System.out.print("Welcome again :D\n");
 				isAdmin = false;
-				isLogedin = true;
+				isLoggedin = true;
 				return id;
 			} else {
 				System.out.print("Wrong ID\n");
@@ -1235,13 +1584,18 @@ public class RouterRental {
 		return null;
 	}
 
+	/**
+	 * Sign-in simulating function
+	 * 
+	 * @return id The ID of the user (customer)
+	 */
 	private static Integer signIn() {
 		System.out.print("Enter an ID: ");
 		Integer id = read.nextInt();
 		read.nextLine();
 		System.out.print("Are you from egypt? [Y/n]: ");
 		char c = read.next().charAt(0);
-		Character.toLowerCase(c);
+		c = Character.toLowerCase(c);
 
 		if (!customer.containsKey(id)) {
 			if (c == 'y' || c == '\n') {
@@ -1255,7 +1609,7 @@ public class RouterRental {
 			System.out.print("Customer already exists\n" + "System will login automatically\n");
 		}
 
-		isLogedin = true;
+		isLoggedin = true;
 		isAdmin = false;
 		return id;
 	}
@@ -1268,7 +1622,7 @@ public class RouterRental {
 			e2.printStackTrace();
 			System.exit(1);
 		}
-		
+
 		try {
 			SystemManager.startSystem();
 		} catch (ClassNotFoundException | IOException e1) {
@@ -1276,11 +1630,11 @@ public class RouterRental {
 			e1.printStackTrace();
 			System.exit(1);
 		}
-		
+
 		Integer id = null;
-		
+
 		while (true) {
-			if (!isLogedin) {
+			if (!isLoggedin) {
 				System.out.print("1] Login\n" + "2] Signin\n" + "3] Close the system\n" + "Enter your choice: ");
 				int choice = read.nextInt();
 				read.nextLine();
@@ -1317,13 +1671,13 @@ public class RouterRental {
 						read.nextLine();
 						systemInformationPrinter.printRouterSchedule(routerSerialNumber);
 					} else if (choice == 6) {
-						isLogedin = false;
+						isLoggedin = false;
 					}
 				} else {
 					System.out.print("1] Rent router\n" + "2] Change router\n" + "3] Extend reservation duration\n"
 							+ "4] Cancel Reservation\n" + "5] Send feedback\n" + "6] Print available routers\n"
-							+ "7] Print schedule of a router\n" + "8] Print invoices\n"
-									+ "9] Print your reservation\n" + "10] Logout\n"
+							+ "7] Print schedule of a router\n" + "8] Print your invoices\n"
+							+ "9] Print your rented router\n" + "10] Print your reservation\n" + "11] Logout\n"
 							+ "Enter your choice: ");
 					int choice = read.nextInt();
 					read.nextLine();
@@ -1336,7 +1690,7 @@ public class RouterRental {
 						else
 							System.out.print("Reservation made successfully\n");
 					} else if (choice == 2) {
-						System.out.print("Enter the router serial number\n");
+						System.out.print("Enter the new router serial number: ");
 						Integer routerSerialNumber = read.nextInt();
 						read.nextLine();
 						if (!customer.get(id).changeModel(routerSerialNumber))
@@ -1364,15 +1718,20 @@ public class RouterRental {
 						systemInformationPrinter.printRouterSchedule(routerSerialNumber);
 					} else if (choice == 8) {
 						systemInformationPrinter.printCustomerInvoices(customer.get(id).getInvoices());
-					}else if(choice == 9) {
+					} else if (choice == 9) {
+						Integer routerSerialNumber = customer.get(id).showRouter();
+						if (routerSerialNumber != null)
+							systemInformationPrinter.printRouter(routerSerialNumber);
+						else
+							System.out.print("Invoice not found");
+					} else if (choice == 10) {
 						Integer reservattionNumber = customer.get(id).showReservation();
-						if(reservattionNumber != null)
+						if (reservattionNumber != null)
 							systemInformationPrinter.printReservation(reservattionNumber);
 						else
 							System.out.print("Invoice not found");
-					}
-					else if (choice == 10) {
-						isLogedin = false;
+					} else if (choice == 11) {
+						isLoggedin = false;
 					}
 				}
 			}
