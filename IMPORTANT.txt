@@ -1,8 +1,0 @@
-First of all you need to move "database" folder to the project folder to be able to use stored data.
-
-The main function has a login/sigin simulation with an ID just to know which user it's dealing with, so if you want to add customers you need to remember the ID to be able to login.
-You can find the admin ID = 2222 hard-coded or use a customer with ID = 2 that has multiple invoice to try all functions.
-
-All data are saved to files so unfortunately the main isn't as requested, yet you will find any variables requested in the classes, including but not limited to hashmap of "router" and "router linked to reservation" variables in InformationHolder class.
-
-Also before using some functions you may need to know either the serial number of the router you want to rent or a reservation number you want to display - not limited to those - so you may print the "Available router" or "Your Invoices" to know them.
